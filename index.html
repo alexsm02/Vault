@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🔐 Pengurus Password Peribadi (IndexedDB)</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="theme-color" content="#4a90e2">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- NEW & IMPROVED STYLES --- */
+
+    /* Root Variables for easy theme management */
+    :root {
+      --primary-color: #4a90e2;
+      --primary-hover: #357abd;
+      --secondary-color: #6c757d;
+      --secondary-hover: #5a6268;
+      --danger-color: #e74c3c;
+      --success-color: #2ecc71;
+      --light-bg: #f8f9fa;
+      --white-bg: #ffffff;
+      --border-color: #dee2e6;
+      --text-dark: #212529;
+      --text-light: #6c757d;
+      --shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      --border-radius: 8px;
+    }
+
+    /* General Body Styling */
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background-color: var(--light-bg);
+      margin: 0;
+      padding: 20px;
+      color: var(--text-dark);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 32px;
+      background: var(--white-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      border: 1px solid #e9ecef;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--text-dark);
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    
+    hr {
+        border: none;
+        border-top: 1px solid var(--border-color);
+        margin: 32px 0;
+    }
+
+    .small {
+      font-size: 14px;
+      color: var(--text-light);
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+    #mainPage .small, #resetPage .small, #setupPage .small {
+        text-align: left;
+        margin-bottom: 16px;
+    }
+
+    /* Forms Elements */
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #343a40;
+    }
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      font-size: 15px;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      background-color: #fdfdff;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.25);
+    }
+
+    /* Buttons Styling */
+    button {
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 8px;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    button:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+
+    /* Tab Navigation */
+    .tab {
+      display: flex;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .tab button {
+      background: none;
+      border: none;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 15px;
+      color: var(--text-light);
+      border-bottom: 3px solid transparent;
+      border-radius: 0;
+      margin: 0;
+      font-weight: 600;
+      transform: none;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .tab button:hover {
+      background: none;
+      color: var(--text-dark);
+    }
+    .tab button.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+    }
+    .tabcontent {
+      padding-top: 8px;
+    }
+
+    /* Password List Styling */
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 16px;
+    }
+    li {
+      padding: 16px;
+      background: #fdfdff;
+      margin-bottom: 12px;
+      border-radius: var(--border-radius);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border-color);
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    li:hover {
+      border-color: #c8d6e5;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    li div:first-child { /* Left side info */
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    li div:first-child strong {
+      font-size: 16px;
+      color: var(--text-dark);
+    }
+    li div:first-child small {
+      color: var(--text-light);
+      font-size: 13px;
+    }
+    li div:last-child { /* Right side buttons */
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      margin-left: 16px;
+    }
+    li button {
+      padding: 8px 12px;
+      font-size: 13px;
+      margin: 0;
+    }
+    li button:last-child { /* Delete button */
+      background-color: #f1f3f5;
+      color: var(--danger-color);
+    }
+    li button:last-child:hover {
+      background-color: #e9ecef;
+    }
+
+    /* Utility & Feedback Classes */
+    .hidden { display: none; }
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .error {
+      color: var(--danger-color);
+      background-color: rgba(231, 76, 60, 0.1);
+      padding: 12px;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      margin-top: 16px;
+      border: 1px solid rgba(231, 76, 60, 0.2);
+    }
+    .success {
+      color: #16a085;
+      font-weight: 600;
+      background-color: #f0fffb;
+      padding: 12px;
+      border-radius: var(--border-radius);
+      border-left: 4px solid #16a085;
+      margin-top: 12px;
+      word-break: break-all;
+      line-height: 1.6;
+    }
+
+    /* Password strength indicator - style the div added by JS */
+    input[type="password"] + div {
+        font-size: 13px !important;
+        margin-top: 8px !important;
+        font-weight: 600 !important;
+        color: var(--text-light);
+    }
+
+    #logoutBtn { background-color: var(--secondary-color); }
+    #logoutBtn:hover { background-color: var(--secondary-hover); }
+    #backToLoginBtn { background-color: #9b59b6; }
+    #backToLoginBtn:hover { background-color: #8e44ad; }
+  </style>
+</head>
+<body>
+
+<div class="container" id="setupPage">
+  <h1>🔐 Daftar Akaun Baru</h1>
+  <p class="small">Selamat datang! Sila tetapkan nama pengguna, kata laluan utama & soalan keselamatan anda.</p>
+  <div class="form-group">
+    <label for="setupUsername">👤 Username</label>
+    <input id="setupUsername" type="text" placeholder="Masukkan username anda" />
+  </div>
+  <div class="form-group">
+    <label for="newMasterPassword">🔐 Master Password</label>
+    <input id="newMasterPassword" type="password" placeholder="Password kuat (≥8 aksara)" />
+  </div>
+  <div class="form-group">
+    <label for="confirmMasterPassword">🔐 Sahkan Password</label>
+    <input id="confirmMasterPassword" type="password" placeholder="Sahkan password" />
+  </div>
+  <div class="form-group">
+    <label for="securityQuestion">🛡️ Soalan Keselamatan</label>
+    <select id="securityQuestion">
+      <option value="pet">Nama haiwan peliharaan pertama?</option>
+      <option value="school">Sekolah rendah anda?</option>
+      <option value="city">Bandar kelahiran ibu anda?</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="securityAnswer">🔑 Jawapan</label>
+    <input id="securityAnswer" type="text" placeholder="Jawapan tidak sensitif huruf (case-insensitive)" />
+  </div>
+  <button id="setupBtn">Daftar Sekarang</button>
+  <p id="setupError" class="error hidden"></p>
+</div>
+
+<div class="container hidden" id="loginPage">
+  <h1>🔐 Log Masuk</h1>
+  <p class="small">Masukkan kredensial anda untuk mengakses peti besi.</p>
+  <div class="form-group">
+    <label for="loginUsername">👤 Username</label>
+    <input id="loginUsername" type="text" placeholder="Masukkan username" />
+  </div>
+  <div class="form-group">
+    <label for="masterPassword">Master Password</label>
+    <input id="masterPassword" type="password" placeholder="Masukkan password utama" />
+  </div>
+  <button id="loginBtn">Log Masuk</button>
+  <div style="text-align:center; font-size: 14px; margin-top:16px;">
+    <a href="#" id="showResetLink">Lupa password?</a> • <a href="#" id="showSetupLink">Daftar akaun baru</a>
+  </div>
+  <p id="loginError" class="error hidden"></p>
+</div>
+
+<div class="container hidden" id="resetPage">
+  <h1>🔁 Reset Password</h1>
+  <p class="small">Jawab soalan keselamatan anda untuk memulihkan akses akaun.</p>
+  <div class="form-group">
+    <label id="displayQuestion" for="userAnswer">Soalan</label>
+    <input id="userAnswer" type="text" placeholder="Jawapan anda" />
+  </div>
+  <div class="form-group">
+    <label for="resetPassword">🔐 Password Baru</label>
+    <input id="resetPassword" type="password" placeholder="Password baru yang kuat" />
+  </div>
+  <div class="form-group">
+    <label for="confirmResetPassword">🔐 Sahkan Password</label>
+    <input id="confirmResetPassword" type="password" placeholder="Sahkan sekali lagi" />
+  </div>
+  <button id="resetBtn">Tetapkan Semula</button>
+  <button id="backToLoginBtn">Kembali</button>
+  <p id="resetError" class="error hidden"></p>
+</div>
+
+<div class="container hidden" id="mainPage">
+  <h1>🔐 Pengurus Password</h1>
+  <p class="small">Hi, <strong id="userGreeting"></strong>! Jana & simpan password anda dengan selamat.</p>
+
+  <div class="tab">
+    <button class="tablinks active" data-tab="generate">✨ Jana Password</button>
+    <button class="tablinks" data-tab="manual">➕ Masukkan Sendiri</button>
+  </div>
+
+  <div id="generate" class="tabcontent">
+    <div class="form-group">
+      <label for="appName">🌐 Nama Aplikasi</label>
+      <input id="appName" type="text" placeholder="Contoh: Facebook" />
+    </div>
+    <div class="form-group">
+      <label for="entryUsername">👤 Username / Email</label>
+      <input id="entryUsername" type="text" placeholder="Username untuk aplikasi ini" />
+    </div>
+    <div class="form-group">
+      <label for="length">📏 Panjang</label>
+      <input id="length" type="number" value="12" min="8" max="32" />
+    </div>
+    <div class="form-group">
+      <label for="complexity">🔐 Kompleksiti</label>
+      <select id="complexity">
+        <option value="medium">Sederhana (Huruf, nombor)</option>
+        <option value="strong">Kuat (Huruf, nombor, simbol)</option>
+      </select>
+    </div>
+
+    <button id="generateBtn">✨ Jana & Tunjuk Password</button>
+    <p id="generatedPassword" class="success hidden" aria-live="polite"></p>
+    <button id="saveBtn" class="hidden">💾 Simpan</button>
+  </div>
+
+  <div id="manual" class="tabcontent hidden">
+    <div class="form-group">
+      <label for="manualAppName">🌐 Nama Aplikasi</label>
+      <input id="manualAppName" type="text" placeholder="Contoh: Bank XYZ" />
+    </div>
+    <div class="form-group">
+      <label for="manualEntryUsername">👤 Username / Email</label>
+      <input id="manualEntryUsername" type="text" placeholder="Username atau email" />
+    </div>
+    <div class="form-group">
+      <label for="manualPassword">🔑 Password Anda</label>
+      <input id="manualPassword" type="password" placeholder="Masukkan password sedia ada" />
+    </div>
+    <button id="saveManualBtn">💾 Simpan Password Ini</button>
+  </div>
+
+  <hr />
+  <h2 style="font-size: 18px; margin-bottom: 16px; color: var(--text-dark);">📁 Password Tersimpan</h2>
+  <ul id="passwordList"></ul>
+
+  <button id="logoutBtn">🚪 Log Keluar</button>
+</div>
+
+<script>
+/* -------------------------
+   SAFE PASSWORD VAULT (IndexedDB)
+   - Vault contents (encrypted JSON) stored in IndexedDB as "encryptedVault"
+   - Metadata (salts, encryptedDEK, username, etc.) kept in localStorage for now
+   - All dynamic rendering uses DOM APIs (textContent), no innerHTML
+   - Basic sanitizer: strip HTML tags from user inputs
+   - Clipboard auto-clear after 15s
+   - Auto-lock after 5 minutes inactivity
+   ------------------------- */
+
+////// Helpers: sanitizer & conversion //////
+
+function stripTags(input) {
+  if (!input) return "";
+  return input.replace(/<\/?[^>]+(>|$)/g, "");
+}
+async function str2ab(str) { return new TextEncoder().encode(str); }
+function ab2hex(buffer) { return Array.from(new Uint8Array(buffer)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function hex2ab(hex) { const arr=(hex.match(/.{1,2}/g)||[]).map(h=>parseInt(h,16)); return new Uint8Array(arr); }
+
+////// Crypto helpers (PBKDF2 + AES-GCM) //////
+
+async function deriveKey(password, salt) {
+  const keyMaterial = await crypto.subtle.importKey("raw", await str2ab(password), { name: "PBKDF2" }, false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt","decrypt"]
+  );
+}
+
+async function encrypt(plainText, key) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(plainText);
+  const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encoded);
+  return ab2hex(iv) + "." + ab2hex(new Uint8Array(cipher));
+}
+
+async function decrypt(encryptedStr, key) {
+  const parts = encryptedStr.split(".");
+  if (parts.length !== 2) throw new Error("Format data salah");
+  const iv = hex2ab(parts[0]);
+  const data = hex2ab(parts[1]);
+  const dec = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+  return new TextDecoder().decode(dec);
+}
+
+////// IndexedDB wrapper //////
+
+const IDB_NAME = "pwvault-db";
+const IDB_STORE = "vault";
+const IDB_VERSION = 1;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE, { keyPath: "id" });
+      }
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// Save encrypted vault string (single record with id: 'encryptedVault')
+async function idbPutEncryptedVault(encryptedStr) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    const store = tx.objectStore(IDB_STORE);
+    store.put({ id: "encryptedVault", data: encryptedStr, updatedAt: Date.now() });
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function idbGetEncryptedVault() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readonly");
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.get("encryptedVault");
+    req.onsuccess = (e) => {
+      const result = e.target.result;
+      resolve(result ? result.data : null);
+    };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+////// Storage for metadata (still localStorage) //////
+
+function safeSetItem(k,v){ localStorage.setItem(k,v); }
+function safeGetItem(k){ return localStorage.getItem(k); }
+
+////// App state //////
+
+let dataEncryptionKey = null; // CryptoKey DEK
+let currentUsername = "";
+let clipboardClearTimer = null;
+
+////// DOM-safe rendering //////
+
+function createPasswordListItem(item) {
+  const li = document.createElement("li");
+
+  const left = document.createElement("div");
+  const strong = document.createElement("strong");
+  strong.textContent = item.appName || "";
+  left.appendChild(strong);
+  left.appendChild(document.createElement("br"));
+
+  const smallUser = document.createElement("small");
+  smallUser.textContent = `👤 ${item.username || ""}`;
+  left.appendChild(smallUser);
+  left.appendChild(document.createElement("br"));
+
+  const smallDate = document.createElement("small");
+  smallDate.textContent = `🗓️ ${item.createdAt || ""}`;
+  left.appendChild(smallDate);
+
+  const right = document.createElement("div");
+
+  const copyBtn = document.createElement("button");
+  copyBtn.textContent = "📋 Salin";
+  copyBtn.addEventListener("click", () => copyPassword(item.password, copyBtn)); // Pass button element for UX feedback
+  right.appendChild(copyBtn);
+
+  const delBtn = document.createElement("button");
+  delBtn.textContent = "🗑️ Padam";
+  delBtn.addEventListener("click", () => deletePassword(item.id));
+  right.appendChild(delBtn);
+
+  li.appendChild(left);
+  li.appendChild(right);
+  return li;
+}
+
+////// App flows //////
+
+function checkStatus() {
+  if (safeGetItem("setupDone") === "true") showLoginPage();
+  else showSetupPage();
+}
+
+function hideAllContainers(){ document.querySelectorAll(".container").forEach(c=>c.classList.add("hidden")); }
+function clearForm(id){
+  const form = document.getElementById(id);
+  if (!form) return;
+  form.querySelectorAll("input[type='text'], input[type='password'], input[type='number']").forEach(i=>i.value="");
+}
+
+function showSetupPage(){ hideAllContainers(); document.getElementById("setupPage").classList.remove("hidden"); clearForm("setupPage"); }
+function showLoginPage(){ hideAllContainers(); document.getElementById("loginPage").classList.remove("hidden"); clearForm("loginPage"); document.getElementById("loginError").classList.add("hidden"); }
+function showResetPage(){
+  const q = safeGetItem("securityQuestion");
+  const map = { pet: "Nama haiwan peliharaan pertama?", school: "Sekolah rendah anda?", city: "Bandar kelahiran ibu anda?" };
+  document.getElementById("displayQuestion").textContent = map[q] || q || "Soalan tidak ditemui";
+  hideAllContainers(); document.getElementById("resetPage").classList.remove("hidden"); clearForm("resetPage"); document.getElementById("resetError").classList.add("hidden");
+}
+function showMainPage(){ hideAllContainers(); document.getElementById("mainPage").classList.remove("hidden"); loadPasswords(); setupInactivityListener(); }
+
+////// Setup account //////
+
+document.getElementById("setupBtn").addEventListener("click", setupAccount);
+async function setupAccount(){
+  const username = stripTags(document.getElementById("setupUsername").value.trim());
+  const pw = document.getElementById("newMasterPassword").value;
+  const confirm = document.getElementById("confirmMasterPassword").value;
+  const answer = stripTags(document.getElementById("securityAnswer").value.trim().toLowerCase());
+  const question = document.getElementById("securityQuestion").value;
+  const errorEl = document.getElementById("setupError");
+  errorEl.classList.add("hidden");
+
+  if (!username) return showError(errorEl,"Sila isi username.");
+  if (!pw || pw.length < 8) return showError(errorEl,"Password mesti ≥8 aksara.");
+  if (pw !== confirm) return showError(errorEl,"Password tidak sepadan.");
+  if (!answer) return showError(errorEl,"Sila isi jawapan.");
+
+  try {
+    const masterSalt = crypto.getRandomValues(new Uint8Array(16));
+    const dekSalt = crypto.getRandomValues(new Uint8Array(16));
+    const masterKey = await deriveKey(pw, masterSalt);
+
+    // Generate DEK
+    const DEK = await crypto.subtle.generateKey({ name:"AES-GCM", length:256 }, true, ["encrypt","decrypt"]);
+    const exportedDEK = await crypto.subtle.exportKey("raw", DEK);
+    const encryptedDEK = await encrypt(ab2hex(exportedDEK), masterKey);
+
+    const answerHash = ab2hex(await crypto.subtle.digest("SHA-256", await str2ab(answer)));
+    const answerKey = await deriveKey(answer, dekSalt);
+    const backupEncryptedDEK = await encrypt(ab2hex(exportedDEK), answerKey);
+
+    // Save metadata to localStorage
+    safeSetItem("setupDone","true");
+    safeSetItem("username", username);
+    safeSetItem("securityQuestion", question);
+    safeSetItem("securityAnswerHash", answerHash);
+    safeSetItem("encryptedDEK", encryptedDEK);
+    safeSetItem("encryptedDEK_backup", backupEncryptedDEK);
+    safeSetItem("masterSalt", ab2hex(masterSalt));
+    safeSetItem("dekSalt", ab2hex(dekSalt));
+
+    // Initialize empty encrypted vault in IndexedDB: encrypt "[]"
+    const emptyEnc = await encrypt("[]", DEK);
+    await idbPutEncryptedVault(emptyEnc);
+
+    alert("✅ Akaun berjaya didaftarkan! Sila log masuk.");
+    showLoginPage();
+  } catch (e) {
+    showError(document.getElementById("setupError"), "Ralat: " + (e.message || e));
+    console.error(e);
+  }
+}
+
+function showError(el,msg){ el.textContent = msg; el.classList.remove("hidden"); }
+
+////// Login //////
+
+document.getElementById("loginBtn").addEventListener("click", login);
+async function login(){
+  const username = stripTags(document.getElementById("loginUsername").value.trim());
+  const pw = document.getElementById("masterPassword").value;
+  const errorEl = document.getElementById("loginError");
+  errorEl.classList.add("hidden");
+
+  if (username !== safeGetItem("username")) return showError(errorEl,"Username salah.");
+  if (!pw) return showError(errorEl,"Sila masukkan password.");
+
+  try {
+    const masterSalt = hex2ab(safeGetItem("masterSalt"));
+    const masterKey = await deriveKey(pw, masterSalt);
+    const encryptedDEK = safeGetItem("encryptedDEK");
+    const decryptedHexDEK = await decrypt(encryptedDEK, masterKey);
+    const rawDEK = hex2ab(decryptedHexDEK);
+
+    dataEncryptionKey = await crypto.subtle.importKey("raw", rawDEK, { name:"AES-GCM" }, true, ["encrypt","decrypt"]);
+    currentUsername = username;
+    document.getElementById("userGreeting").textContent = username;
+    showMainPage();
+  } catch (e) {
+    showError(errorEl,"Password salah atau data rosak.");
+    console.error(e);
+  }
+}
+
+document.getElementById("logoutBtn").addEventListener("click", logout);
+function logout(){ dataEncryptionKey = null; currentUsername=""; showLoginPage(); }
+
+////// Password generation & save (no global temp) //////
+
+document.getElementById("generateBtn").addEventListener("click", async ()=>{
+  const length = parseInt(document.getElementById("length").value) || 12;
+  const complexity = document.getElementById("complexity").value;
+  const appName = stripTags(document.getElementById("appName").value.trim());
+  if (!appName) { alert("Sila isi nama aplikasi!"); return; }
+
+  let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  if (complexity === "strong") chars += "!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+  const arr = new Uint32Array(length);
+  crypto.getRandomValues(arr);
+  let password = "";
+  for (let i=0;i<length;i++) password += chars[arr[i] % chars.length];
+
+  // show in DOM
+  const genEl = document.getElementById("generatedPassword");
+  genEl.textContent = `🔐 ${password}`;
+  genEl.classList.remove("hidden");
+  document.getElementById("saveBtn").classList.remove("hidden");
+});
+
+document.getElementById("saveBtn").addEventListener("click", savePassword);
+
+async function savePassword(){
+  const genEl = document.getElementById("generatedPassword");
+  if (!genEl || !genEl.textContent) { alert("Tiada password untuk disimpan."); return; }
+  const password = genEl.textContent.replace(/^🔐\s*/,"");
+  if (!password) { alert("Tiada password."); return; }
+
+  const appName = stripTags(document.getElementById("appName").value.trim());
+  const username = stripTags(document.getElementById("entryUsername").value.trim());
+
+  try {
+    const raw = await loadRawVault(); // returns JSON string of array
+    const arr = JSON.parse(raw);
+    arr.push({ id: Date.now(), appName, username, password, createdAt: new Date().toLocaleString() });
+
+    const encrypted = await encrypt(JSON.stringify(arr), dataEncryptionKey);
+    await idbPutEncryptedVault(encrypted);
+
+    alert("✅ Berjaya disimpan!");
+    document.getElementById("appName").value="";
+    document.getElementById("entryUsername").value="";
+    genEl.textContent=""; genEl.classList.add("hidden");
+    document.getElementById("saveBtn").classList.add("hidden");
+    loadPasswords();
+  } catch (e) {
+    alert("❌ Gagal menyimpan: " + (e.message || e));
+    console.error(e);
+  }
+}
+
+////// Manual save //////
+
+document.getElementById("saveManualBtn").addEventListener("click", async ()=>{
+  const appName = stripTags(document.getElementById("manualAppName").value.trim());
+  const username = stripTags(document.getElementById("manualEntryUsername").value.trim());
+  const password = document.getElementById("manualPassword").value;
+  if (!appName) { alert("Sila isi nama aplikasi!"); return; }
+  if (!password) { alert("Sila isi password!"); return; }
+  try {
+    const raw = await loadRawVault();
+    const arr = JSON.parse(raw);
+    arr.push({ id: Date.now(), appName, username, password, createdAt: new Date().toLocaleString() });
+    const encrypted = await encrypt(JSON.stringify(arr), dataEncryptionKey);
+    await idbPutEncryptedVault(encrypted);
+    alert("✅ Password manual berjaya disimpan!");
+    document.getElementById("manualAppName").value=""; document.getElementById("manualEntryUsername").value=""; document.getElementById("manualPassword").value="";
+    loadPasswords();
+  } catch (e) {
+    alert("❌ Gagal menyimpan: " + (e.message || e));
+    console.error(e);
+  }
+});
+
+////// Load & render list //////
+
+async function loadRawVault(){
+  // returns JSON string '[]' if none
+  const enc = await idbGetEncryptedVault();
+  if (!enc) return "[]";
+  try {
+    return await decrypt(enc, dataEncryptionKey);
+  } catch (e) {
+    alert("❌ Data rosak atau kunci tidak sah. Log keluar.");
+    logout();
+    return "[]";
+  }
+}
+
+async function loadPasswords(){
+  const list = document.getElementById("passwordList");
+  list.innerHTML = "";
+  let raw = "[]";
+  try { raw = await loadRawVault(); } catch(e){ raw="[]"; }
+  let arr = [];
+  try { arr = JSON.parse(raw); } catch(e){ arr = []; }
+
+  if (!arr || arr.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "Tiada password disimpan.";
+    li.style.justifyContent = "center";
+    li.style.color = "var(--text-light)";
+    list.appendChild(li);
+    return;
+  }
+
+  arr.forEach(item => {
+    const li = createPasswordListItem(item);
+    list.appendChild(li);
+  });
+}
+
+////// Copy to clipboard with auto-clear //////
+// (Minor UX tweak: change button text on copy)
+async function copyPassword(pwd, btn){
+  try {
+    await navigator.clipboard.writeText(pwd);
+    const originalText = btn.textContent;
+    btn.textContent = "✅ Disalin!";
+    btn.style.backgroundColor = "var(--success-color)";
+    
+    setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.backgroundColor = "var(--primary-color)";
+    }, 2000);
+
+    if (clipboardClearTimer) { clearTimeout(clipboardClearTimer); clipboardClearTimer = null; }
+    clipboardClearTimer = setTimeout(async ()=>{
+      try {
+        const cur = await navigator.clipboard.readText();
+        if (cur === pwd) await navigator.clipboard.writeText("");
+      } catch(e){
+        // ignore if readText blocked
+      } finally { clipboardClearTimer = null; }
+    }, 15000);
+  } catch(e){
+    alert("Gagal salin: " + (e.message || e));
+    console.error(e);
+  }
+}
+
+////// Delete entry //////
+
+async function deletePassword(id){
+  if (!confirm("Anda pasti mahu padam rekod ini? Tindakan ini tidak boleh diundur.")) return;
+  try {
+    const raw = await loadRawVault();
+    let arr = JSON.parse(raw);
+    arr = arr.filter(x => x.id !== id);
+    const encrypted = await encrypt(JSON.stringify(arr), dataEncryptionKey);
+    await idbPutEncryptedVault(encrypted);
+    loadPasswords();
+  } catch(e){
+    alert("Gagal padam: " + (e.message || e));
+    console.error(e);
+  }
+}
+
+////// Reset master password //////
+
+document.getElementById("resetBtn").addEventListener("click", resetMasterPassword);
+async function resetMasterPassword(){
+  const answer = stripTags(document.getElementById("userAnswer").value.trim().toLowerCase());
+  const newPassword = document.getElementById("resetPassword").value;
+  const confirm = document.getElementById("confirmResetPassword").value;
+  const errorEl = document.getElementById("resetError");
+  errorEl.classList.add("hidden");
+
+  if (newPassword.length < 8) return showError(errorEl,"Password baru mesti ≥8 aksara.");
+  if (newPassword !== confirm) return showError(errorEl,"Password tidak sepadan.");
+
+  try {
+    const storedHash = safeGetItem("securityAnswerHash");
+    const testHash = ab2hex(await crypto.subtle.digest("SHA-256", await str2ab(answer)));
+    if (testHash !== storedHash) return showError(errorEl,"Jawapan salah!");
+
+    const dekSalt = hex2ab(safeGetItem("dekSalt"));
+    const backupEncryptedDEK = safeGetItem("encryptedDEK_backup");
+    if (!backupEncryptedDEK) throw new Error("Backup DEK tidak wujud.");
+
+    const answerKey = await deriveKey(answer, dekSalt);
+    const decryptedHexDEK = await decrypt(backupEncryptedDEK, answerKey);
+    const rawDEK = hex2ab(decryptedHexDEK);
+
+    const DEK = await crypto.subtle.importKey("raw", rawDEK, { name:"AES-GCM" }, true, ["encrypt","decrypt"]);
+    const exportedDEK = await crypto.subtle.exportKey("raw", DEK);
+
+    const newMasterSalt = hex2ab(safeGetItem("masterSalt"));
+    const newMasterKey = await deriveKey(newPassword, newMasterSalt);
+    const newEncryptedDEK = await encrypt(ab2hex(exportedDEK), newMasterKey);
+    safeSetItem("encryptedDEK", newEncryptedDEK);
+
+    alert("✅ Password berjaya ditetapkan semula. Sila log masuk semula.");
+    showLoginPage();
+  } catch(e) {
+    console.error("Reset error:", e);
+    showError(errorEl, "Gagal memulihkan data: " + (e.message || "Ralat tidak diketahui"));
+  }
+}
+
+////// Tabs //////
+
+document.querySelectorAll(".tablinks").forEach(btn => btn.addEventListener("click", (e)=>{
+  document.querySelectorAll(".tabcontent").forEach(tc=>tc.classList.add("hidden"));
+  document.querySelectorAll(".tablinks").forEach(t=>t.classList.remove("active"));
+  const name = btn.getAttribute("data-tab");
+  document.getElementById(name).classList.remove("hidden");
+  btn.classList.add("active");
+}));
+
+////// Auto-lock after inactivity //////
+
+let inactivityTimer;
+function resetInactivityTimer(){ clearTimeout(inactivityTimer); inactivityTimer = setTimeout(()=>{
+  if (dataEncryptionKey && currentUsername) { logout(); alert("🔐 Sesi tamat kerana tidak aktif. Sila log masuk semula."); }
+}, 300000); } // 5 min
+
+function setupInactivityListener(){
+  const events = ['mousemove','keydown','click','scroll','touchstart'];
+  events.forEach(evt => window.addEventListener(evt, resetInactivityTimer, true));
+  resetInactivityTimer();
+}
+
+////// Service Worker registration (safe) //////
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    try {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('SW: Berjaya daftar', reg.scope))
+        .catch(err => console.warn('SW: Gagal daftar', err));
+    } catch (e) {
+      console.warn('SW registration error', e);
+    }
+  });
+}
+
+////// Links & init //////
+
+document.getElementById("showResetLink").addEventListener("click", e => { e.preventDefault(); showResetPage(); });
+document.getElementById("showSetupLink").addEventListener("click", e => { e.preventDefault(); showSetupPage(); });
+document.getElementById("backToLoginBtn").addEventListener("click", e => { e.preventDefault(); showLoginPage(); });
+
+// Password strength indicator (light)
+function checkPasswordStrength(password){
+  if (!password) return {score:0,label:"Lemah"};
+  let score=0;
+  const checks=[
+    {regex:/.{8,}/,w:1},{regex:/[a-z]/,w:1},{regex:/[A-Z]/,w:1},{regex:/[0-9]/,w:1},{regex:/[^A-Za-z0-9]/,w:2}
+  ];
+  checks.forEach(c=>{ if (c.regex.test(password)) score+=c.w; });
+  if (score>=5) return {score,label:"Kuat"}; if (score>=3) return {score,label:"Sederhana"}; return {score,label:"Lemah"};
+}
+function attachStrengthChecker(inputId){
+  const input=document.getElementById(inputId); if(!input) return;
+  const indicator=document.createElement("div"); indicator.className = 'strength-indicator';
+  input.parentNode.appendChild(indicator);
+  input.addEventListener('input', ()=>{ const v=input.value; if(v){ const r=checkPasswordStrength(v); indicator.textContent=`🔹 Kekuatan: ${r.label}`; } else indicator.textContent=''; });
+  input.addEventListener('blur', ()=>{ if(!input.value) indicator.textContent=''; });
+}
+document.addEventListener('DOMContentLoaded', ()=>{ attachStrengthChecker('newMasterPassword'); attachStrengthChecker('resetPassword'); attachStrengthChecker('manualPassword'); });
+
+checkStatus();
+</script>
+
+</body>
+</html>
