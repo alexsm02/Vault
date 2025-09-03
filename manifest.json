@@ -1,6 +1,6 @@
 {
-  "name": "Password vault",
-  "short_name": "PasswordVault",
+  "name": "SecureVault",
+  "short_name": "SecureVault",
   "description": "Jana & simpan kata laluan secara selamat – berasaskan web dengan penyulitan AES-GCM.",
   "start_url": "./",
   "scope": "./",
